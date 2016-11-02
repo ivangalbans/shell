@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include "../include/parser.h"
 
 int write_prompt()
 {
