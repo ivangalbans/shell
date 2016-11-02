@@ -41,6 +41,112 @@ int counter(char *str,char c)
 }
 
 
+int parse_simplecommand(char *str, simple_command *scommand)
+{
+	
+
+	char *str_tmp=str;
+	scommand->_no_tokens=0;
+	scommand->_no_outfiles=0;
+	scommand->_no_infiles=0;
+	scommand->_outfiles=0;
+	scommand->_infiles=0;
+	scommand->_tokens=0;
+
+
+		int k;
+		str_global=NULL;
+		char  *token=next_token(str_tmp,&k);
+		while(token!=NULL)
+		{
+				
+				switch (k)
+				{
+					case t_input:
+					{
+						++scommand->_no_infiles;
+						break;
+					}
+					case t_output_append:
+					case t_output_write:
+					{
+						++scommand->_no_outfiles;
+						break;
+					}
+					case t_command:
+					{
+						++scommand->_no_tokens;
+						break;
+					}
+				}		
+				free(token);
+				token=next_token(NULL,&k);
+		}
+
+		scommand->_outfiles=(output_file*)malloc(scommand->_no_outfiles*sizeof(output_file));
+		scommand->_infiles=(char**)malloc(scommand->_no_infiles*sizeof(char*));
+		scommand->_tokens=(char**)malloc(scommand->_no_tokens*sizeof(char*));
+		for (int i = 0; i < scommand->_no_tokens; ++i) scommand->_tokens[i]=0;
+		for (int i = 0; i < scommand->_no_infiles; ++i) scommand->_infiles[i]=0;
+		for (int i = 0; i < scommand->_no_outfiles; ++i)
+		{
+			scommand->_outfiles[i]._file=0;
+			scommand->_outfiles[i]._type=0;
+		}
+		str_global=NULL;
+		token=next_token(str,&k);
+		int it_out=0, it_inf=0, it_tokens=0;
+		while(token!=NULL)
+		{
+				
+					switch (k)
+					{
+						case t_input:
+						{
+						
+								scommand->_infiles[it_inf]=token;
+								++it_inf;
+							break;
+							
+						}
+						case t_output_append:
+						{
+							
+								scommand->_outfiles[it_out]._file=token;
+								scommand->_outfiles[it_out]._type=t_output_append;
+								++it_out;
+							break;
+						}
+						case t_output_write:
+						{
+							
+								scommand->_outfiles[it_out]._file=token;
+								scommand->_outfiles[it_out]._type=t_output_write;
+							break;
+						}
+						case t_command:
+						{
+							
+								scommand->_tokens[it_tokens]=token;
+								++it_tokens;
+							break;
+						}
+					}
+					
+				token=next_token(NULL,&k);
+			
+
+		}
+		scommand->_infiles[scommand->_no_infiles]=NULL;
+		scommand->_outfiles[scommand->_no_outfiles]._file=NULL;
+		scommand->_outfiles[scommand->_no_outfiles]._type=0;
+		scommand->_tokens[scommand->_no_tokens]=NULL;
+
+	return 0;
+
+}
+
+
 int parse_command(char *str,int size,command *ccommand)
 {
 	ccommand->_background=0;
