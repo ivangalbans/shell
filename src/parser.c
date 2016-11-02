@@ -41,6 +41,70 @@ int counter(char *str,char c)
 }
 
 
+char* next_token(char *str,int *type)
+{
+	
+	char *token;
+	*type=t_command;
+	
+	if(str!=NULL)
+	{
+		str_global=str;
+	} 
+	
+	while(*str_global==' ')
+		++str_global;
+
+	if(*str_global==0)
+	{
+		str_global=NULL;
+		*type=0;
+		return NULL;
+	}
+	
+	
+
+	switch (*str_global)
+	{
+		case '<':
+		{
+			*type=t_input;
+			++str_global;
+			break;
+		}
+		case '>':
+		{ 
+			*type=t_output_write;
+			if(*(str_global+1)=='>')
+			{
+				*type=t_output_append;
+				++str_global;
+			}
+			++str_global;
+			break;
+		}
+	}	
+	
+	while(*str_global==' ')
+		++str_global;
+
+	char *current=str_global;
+	
+    while(*current!=' ' && *current!='<' && *current!='>' && *current!=0 )
+	{
+		++current;
+	}
+
+	
+	int token_size=current-str_global;
+	//printf("%d\n",token_size );
+	token=(char*)malloc((token_size)*(sizeof(char)));
+	strncpy(token,str_global,token_size);
+	token[token_size]=0;
+	str_global=current;
+	return token;
+}
+
 int parse_simplecommand(char *str, simple_command *scommand)
 {
 	
