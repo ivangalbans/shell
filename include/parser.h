@@ -1,3 +1,9 @@
+#define t_input 1
+#define t_output_write 2
+#define t_output_append 3
+#define t_command 4
+
+
 //describe a simple commad and arguments
 typedef struct
 {
@@ -38,3 +44,12 @@ typedef struct
 } command;
 
 
+//count how many times a chararacter c divide a string str
+int counter(char *str,char c);
+
+char *str_global;
+char* next_token(char *str,int *type);
+
+int parse_simplecommand(char *str, simple_command *scommand);
+
+int parse_command(char *str,int size,command *ccommand);
