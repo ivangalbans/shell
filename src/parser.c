@@ -1,5 +1,8 @@
 #include "../include/parser.h"
-
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 //count how many times a chararacter c divide a string str
 int counter(char *str,char c)
