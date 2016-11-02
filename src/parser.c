@@ -1,6 +1,46 @@
 #include "../include/parser.h"
 
 
+//count how many times a chararacter c divide a string str
+int counter(char *str,char c)
+{
+	
+	int counter=1;
+	
+	char *tmp=str;
+	
+
+	//not count firsts characters equals to c
+	while(*tmp==c)
+		++tmp;
+
+	//verify if the line if a line is formed only by c characters
+	if(*tmp==0)
+		return 0;
+
+	//cout the the number of characters equals to c
+	for (; *tmp ; ++tmp)
+	{
+		if (*tmp==c)
+		{
+			++counter;
+		}
+
+		//not count consecutive character equals to c
+		while(*tmp==c)
+			++tmp;
+
+		//not count lasts character equals to c
+		if(*tmp==0)
+		{
+			--counter;
+			--tmp;
+		}
+	}
+	return counter;
+}
+
+
 int parse_command(char *str,int size,command *ccommand)
 {
 	ccommand->_background=0;
