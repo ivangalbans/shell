@@ -52,6 +52,35 @@ void read_command(command *cmd)
 		
 }
 
+int get_outfile(simple_command *cmd)
+{
+
+	int outfile=STDOUT_FILENO;
+
+		int size_outfile=cmd->_no_outfiles;
+
+		if(size_outfile>0)
+		{
+			for (int i = 0; i < cmd->_no_outfiles; ++i)
+			{
+		        if(i>0)
+		        {
+					close (outfile);
+		        }
+				if(cmd->_outfiles[i]._type==t_output_write)
+				{
+					outfile=open(cmd->_outfiles[i]._file, O_WRONLY | O_CREAT | O_TRUNC,S_IRWXU);
+				}
+				else
+				{
+					outfile=open(cmd->_outfiles[i]._file, O_APPEND| O_CREAT|O_WRONLY,S_IRWXU );
+				}
+			}
+		}
+
+	return outfile;
+}
+
 int execute_process(command *cmd)
 {
 	int i;
