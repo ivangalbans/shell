@@ -52,6 +52,54 @@ void read_command(command *cmd)
 		
 }
 
+int execute_process(command *cmd)
+{
+	int i;
+	pid_t pid;
+	int fdpipe[2], infile, outfile;
+
+	for(i=0;i<cmd->_no_simple_commands;i++)
+	{
+		outfile=get_outfile(&cmd->_simple_commands[i]);
+		if(i!=cmd->_no_simple_commands-1)
+		{
+			pipe(fdpipe);
+			if(outfile==STDOUT_FILENO)
+				outfile=fdpipe[1];
+			else
+				close(fdpipe[1]);
+		}
+
+		int asd = builtin_command(&cmd->_simple_commands[i],outfile);
+		if(asd==2)
+			return 2;
+		if(!asd)
+		{
+			pid=fork();
+			int status;
+			if(pid==0)
+			{
+				exec_command(&cmd->_simple_commands[i],infile,outfile);
+			}
+		}
+		if(infile!=get_infile(&cmd->_simple_commands[i]))
+			close(infile);
+		if(outfile!=get_outfile(&cmd->_simple_commands[i]))
+			close(outfile);
+		infile=get_infile(&cmd->_simple_commands[i]);
+		if(infile==STDIN_FILENO)
+			infile=fdpipe[0];
+		else 
+			close(fdpipe[0]);
+	}
+	
+	if(!cmd->_background)
+	{
+		int status;
+		waitpid(pid,&status,0);
+	}
+}
+
 int main()
 {
 	char *logname = getenv("LOGNAME");

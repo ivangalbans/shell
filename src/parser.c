@@ -13,7 +13,6 @@
 char *str_global;
 
 
-
 //count how many times a chararacter c divide a string str
 int counter(char *str,char c)
 {
