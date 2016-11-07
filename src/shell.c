@@ -17,6 +17,15 @@ int end_register=0;
 
 const char *endl="\n";
 
+
+void print_history(int fd)
+{
+	for (int i = start_register; i != end_register; i=(i+1)%register_size)
+	{
+		write(fd,register_buffer[i],register_buffer_size[i]);
+	}	
+}
+
 int write_prompt()
 {
 		char path[1024],*logname,user[64],*p1="@",*p2=":",*p3="$ ";
