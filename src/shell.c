@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "../include/parser.h"
 
 #define register_size 51
@@ -20,7 +23,8 @@ const char *endl="\n";
 
 void print_history(int fd)
 {
-	for (int i = start_register; i != end_register; i=(i+1)%register_size)
+	int i;
+	for (i = start_register; i != end_register; i=(i+1)%register_size)
 	{
 		write(fd,register_buffer[i],register_buffer_size[i]);
 	}	
@@ -63,29 +67,29 @@ void read_command(command *cmd)
 
 int get_outfile(simple_command *cmd)
 {
-
+	int i;
 	int outfile=STDOUT_FILENO;
 
-		int size_outfile=cmd->_no_outfiles;
+	int size_outfile=cmd->_no_outfiles;
 
-		if(size_outfile>0)
+	if(size_outfile > 0)
+	{
+		for (i = 0; i < cmd->_no_outfiles; ++i)
 		{
-			for (int i = 0; i < cmd->_no_outfiles; ++i)
+	        if(i > 0)
+	        {
+				close (outfile);
+	        }
+			if(cmd->_outfiles[i]._type == t_output_write)
 			{
-		        if(i>0)
-		        {
-					close (outfile);
-		        }
-				if(cmd->_outfiles[i]._type==t_output_write)
-				{
-					outfile=open(cmd->_outfiles[i]._file, O_WRONLY | O_CREAT | O_TRUNC,S_IRWXU);
-				}
-				else
-				{
-					outfile=open(cmd->_outfiles[i]._file, O_APPEND| O_CREAT|O_WRONLY,S_IRWXU );
-				}
+				outfile=open(cmd->_outfiles[i]._file, O_WRONLY | O_CREAT | O_TRUNC,S_IRWXU);
+			}
+			else
+			{
+				outfile=open(cmd->_outfiles[i]._file, O_APPEND| O_CREAT|O_WRONLY,S_IRWXU );
 			}
 		}
+	}
 
 	return outfile;
 }
@@ -188,6 +192,27 @@ int execute_process(command *cmd)
 	}
 }
 
+void free_command(command *cmd)
+{
+	int i, j;
+	for (i = 0; i < cmd->_no_simple_commands; ++i)
+	{
+		for (j = 0; j < cmd->_simple_commands[i]._no_tokens; ++j)
+		{
+			free(cmd->_simple_commands[i]._tokens[j]);
+		}
+		for (j = 0; j < cmd->_simple_commands[i]._no_infiles; ++j)
+		{
+			free(cmd->_simple_commands[i]._infiles[j]);
+		}
+		for (j = 0; j < cmd->_simple_commands[i]._no_outfiles; ++j)
+		{
+			free(cmd->_simple_commands[i]._outfiles[j]._file);
+		}
+		free(cmd->_simple_commands);
+	}
+}
+
 int main()
 {
 	char *logname = getenv("LOGNAME");
@@ -200,6 +225,10 @@ int main()
 		command cmd;
 		read_command(&cmd);
 
+		if(execute_process(&cmd)==2)
+			return 0;
+
+		//free_command(&cmd);
 	}
 
 	return 0;
