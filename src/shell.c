@@ -81,6 +81,27 @@ int get_outfile(simple_command *cmd)
 	return outfile;
 }
 
+int builtin_command(simple_command *cmd,int fd)
+{
+	char *tmp=cmd->_tokens[0];
+	if(strcmp("cd",tmp)==0)
+	{
+		if (chdir(cmd->_tokens[1]) != 0) 
+		{
+  			perror("pm_sh");
+		}
+  		return 1;
+	}
+	if(strcmp("history",tmp)==0)
+	{
+			print_history(fd);
+			return 1;
+	}
+	if(strcmp("exit",tmp)==0)
+		return 2;
+    return 0;
+}
+
 int execute_process(command *cmd)
 {
 	int i;
