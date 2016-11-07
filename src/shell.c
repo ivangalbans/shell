@@ -122,6 +122,15 @@ int builtin_command(simple_command *cmd,int fd)
     return 0;
 }
 
+int get_infile(simple_command *cmd)
+{
+	int infile=STDIN_FILENO;
+	int size_infile=cmd->_no_infiles;
+	if(size_infile>0)
+			 infile=open(cmd->_infiles[size_infile-1],O_RDONLY,S_IRWXU);
+	return infile;
+}
+
 int execute_process(command *cmd)
 {
 	int i;
