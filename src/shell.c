@@ -81,6 +81,26 @@ int get_outfile(simple_command *cmd)
 	return outfile;
 }
 
+
+int exec_command(simple_command* cmd,int infile,int outfile)
+{
+	if (infile != STDIN_FILENO)
+	{
+		dup2 (infile, STDIN_FILENO);
+		close (infile);
+	}
+	if (outfile != STDOUT_FILENO)
+	{
+		dup2 (outfile, STDOUT_FILENO);
+		close (outfile);
+	}
+
+
+	execvp(cmd->_tokens[0],cmd->_tokens);
+	perror ("pm_sh");
+	exit (1);
+}
+
 int builtin_command(simple_command *cmd,int fd)
 {
 	char *tmp=cmd->_tokens[0];
