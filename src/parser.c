@@ -1,8 +1,18 @@
-#include "../include/parser.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "../include/type.h"
+
+
+#define t_input 1
+#define t_output_write 2
+#define t_output_append 3
+#define t_command 4
+
+char *str_global;
+
+
 
 //count how many times a chararacter c divide a string str
 int counter(char *str,char c)
@@ -48,7 +58,7 @@ char* next_token(char *str,int *type)
 {
 	
 	char *token;
-	*type=t_command;
+	*type = t_command;
 	
 	if(str!=NULL)
 	{
@@ -111,8 +121,11 @@ char* next_token(char *str,int *type)
 int parse_simplecommand(char *str, simple_command *scommand)
 {
 	
-
+	int i;
+	int k;
 	char *str_tmp=str;
+	char *token;
+
 	scommand->_no_tokens=0;
 	scommand->_no_outfiles=0;
 	scommand->_no_infiles=0;
@@ -120,94 +133,91 @@ int parse_simplecommand(char *str, simple_command *scommand)
 	scommand->_infiles=0;
 	scommand->_tokens=0;
 
-
-		int k;
-		str_global=NULL;
-		char  *token=next_token(str_tmp,&k);
-		while(token!=NULL)
-		{
-				
-				switch (k)
-				{
-					case t_input:
-					{
-						++scommand->_no_infiles;
-						break;
-					}
-					case t_output_append:
-					case t_output_write:
-					{
-						++scommand->_no_outfiles;
-						break;
-					}
-					case t_command:
-					{
-						++scommand->_no_tokens;
-						break;
-					}
-				}		
-				free(token);
-				token=next_token(NULL,&k);
-		}
-
-		scommand->_outfiles=(output_file*)malloc(scommand->_no_outfiles*sizeof(output_file));
-		scommand->_infiles=(char**)malloc(scommand->_no_infiles*sizeof(char*));
-		scommand->_tokens=(char**)malloc(scommand->_no_tokens*sizeof(char*));
-		for (int i = 0; i < scommand->_no_tokens; ++i) scommand->_tokens[i]=0;
-		for (int i = 0; i < scommand->_no_infiles; ++i) scommand->_infiles[i]=0;
-		for (int i = 0; i < scommand->_no_outfiles; ++i)
-		{
-			scommand->_outfiles[i]._file=0;
-			scommand->_outfiles[i]._type=0;
-		}
-		str_global=NULL;
-		token=next_token(str,&k);
-		int it_out=0, it_inf=0, it_tokens=0;
-		while(token!=NULL)
-		{
-				
-					switch (k)
-					{
-						case t_input:
-						{
-						
-								scommand->_infiles[it_inf]=token;
-								++it_inf;
-							break;
-							
-						}
-						case t_output_append:
-						{
-							
-								scommand->_outfiles[it_out]._file=token;
-								scommand->_outfiles[it_out]._type=t_output_append;
-								++it_out;
-							break;
-						}
-						case t_output_write:
-						{
-							
-								scommand->_outfiles[it_out]._file=token;
-								scommand->_outfiles[it_out]._type=t_output_write;
-							break;
-						}
-						case t_command:
-						{
-							
-								scommand->_tokens[it_tokens]=token;
-								++it_tokens;
-							break;
-						}
-					}
-					
-				token=next_token(NULL,&k);
+	str_global=NULL;
+	token=next_token(str_tmp,&k);
+	while(token!=NULL)
+	{
 			
+		switch (k)
+		{
+			case t_input:
+			{
+				++scommand->_no_infiles;
+				break;
+			}
+			case t_output_append:
+			case t_output_write:
+			{
+				++scommand->_no_outfiles;
+				break;
+			}
+			case t_command:
+			{
+				++scommand->_no_tokens;
+				break;
+			}
+		}		
+		free(token);
+		token=next_token(NULL,&k);
+	}
 
-		}
-		scommand->_infiles[scommand->_no_infiles]=NULL;
-		scommand->_outfiles[scommand->_no_outfiles]._file=NULL;
-		scommand->_outfiles[scommand->_no_outfiles]._type=0;
-		scommand->_tokens[scommand->_no_tokens]=NULL;
+	scommand->_outfiles=(output_file*)malloc(scommand->_no_outfiles*sizeof(output_file));
+	scommand->_infiles=(char**)malloc(scommand->_no_infiles*sizeof(char*));
+	scommand->_tokens=(char**)malloc(scommand->_no_tokens*sizeof(char*));
+	for (i = 0; i < scommand->_no_tokens; ++i) scommand->_tokens[i]=0;
+	for (i = 0; i < scommand->_no_infiles; ++i) scommand->_infiles[i]=0;
+	for (i = 0; i < scommand->_no_outfiles; ++i)
+	{
+		scommand->_outfiles[i]._file=0;
+		scommand->_outfiles[i]._type=0;
+	}
+	str_global=NULL;
+	token=next_token(str,&k);
+	int it_out=0, it_inf=0, it_tokens=0;
+	while(token!=NULL)
+	{
+			
+			switch (k)
+			{
+				case t_input:
+				{
+				
+					scommand->_infiles[it_inf]=token;
+					++it_inf;
+					break;
+					
+				}
+				case t_output_append:
+				{
+					
+					scommand->_outfiles[it_out]._file=token;
+					scommand->_outfiles[it_out]._type=t_output_append;
+					++it_out;
+					break;
+				}
+				case t_output_write:
+				{
+					
+					scommand->_outfiles[it_out]._file=token;
+					scommand->_outfiles[it_out]._type=t_output_write;
+					break;
+				}
+				case t_command:
+				{
+					
+					scommand->_tokens[it_tokens]=token;
+					++it_tokens;
+					break;
+				}
+			}
+			
+		token = next_token(NULL,&k);
+
+	}
+	scommand->_infiles[scommand->_no_infiles]=NULL;
+	scommand->_outfiles[scommand->_no_outfiles]._file=NULL;
+	scommand->_outfiles[scommand->_no_outfiles]._type=0;
+	scommand->_tokens[scommand->_no_tokens]=NULL;
 
 	return 0;
 
@@ -216,6 +226,10 @@ int parse_simplecommand(char *str, simple_command *scommand)
 
 int parse_command(char *str,int size,command *ccommand)
 {
+	char *saveptr;
+	char *token;
+	int i;
+
 	ccommand->_background=0;
 	
 	size-=2;
@@ -223,15 +237,13 @@ int parse_command(char *str,int size,command *ccommand)
 	while(str[size]==' ')
 	{
 		--size;
-
 	}
+
 	if(str[size]=='&')
 		ccommand->_background=1;
 	else
 		++size;	
 	str[size]=0;
-
-	
 
 	ccommand->_no_simple_commands=counter(str,'|');
 	
@@ -240,14 +252,11 @@ int parse_command(char *str,int size,command *ccommand)
 	{
 		ccommand->_simple_commands=(simple_command*)malloc( ccommand->_no_simple_commands * sizeof ( simple_command ) );
 
-		char *saveptr;	
-
-		char *token = strtok_r(str,"|",&saveptr);
+		token = strtok_r(str,"|",&saveptr);
 		
-		for (int i = 0; token!= NULL; ++i)
+		for (i = 0; token!= NULL; ++i)
 		{   
 			parse_simplecommand(token,&ccommand->_simple_commands[i]);
-			
 			token=strtok_r(NULL,"|",&saveptr);
 		}
 	}

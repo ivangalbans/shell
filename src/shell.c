@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include "../include/parser.h"
 
-# define register_size 51
-# define buffer_size 1024
+#define register_size 51
+#define buffer_size 1024
 
 char register_buffer[register_size][buffer_size];
 
@@ -31,6 +31,7 @@ int write_prompt()
 		write(STDIN_FILENO,p3,strlen(p3));
 }
 
+
 void read_command(command *cmd)
 {
 	 	char buffer[buffer_size];
@@ -47,7 +48,8 @@ void read_command(command *cmd)
 		if(end_register==start_register)
 			start_register=(start_register+1)%register_size;	
 		
-		parse_command(buffer,size,cmd);
+		parse_command(buffer, size, cmd);
+		
 }
 
 int main()
