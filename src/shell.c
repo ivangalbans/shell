@@ -224,26 +224,6 @@ int execute_process(command *cmd)
 	}
 }
 
-void free_command(command *cmd)
-{
-	int i, j;
-	for (i = 0; i < cmd->_no_simple_commands; ++i)
-	{
-		for (j = 0; j < cmd->_simple_commands[i]._no_tokens; ++j)
-		{
-			free(cmd->_simple_commands[i]._tokens[j]);
-		}
-		for (j = 0; j < cmd->_simple_commands[i]._no_infiles; ++j)
-		{
-			free(cmd->_simple_commands[i]._infiles[j]);
-		}
-		for (j = 0; j < cmd->_simple_commands[i]._no_outfiles; ++j)
-		{
-			free(cmd->_simple_commands[i]._outfiles[j]._file);
-		}
-	}
-	free(cmd->_simple_commands);
-}
 
 int main()
 {
@@ -259,8 +239,6 @@ int main()
 		read_command(&cmd);
 
 		int exit = execute_process(&cmd);
-
-		free_command(&cmd);
 
 		if(exit==2)
 			return 0; 
