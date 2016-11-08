@@ -107,7 +107,6 @@ char* next_token(char *str,int *type)
 		++current;
 	}
 
-	
 	int token_size=current-str_global;
 	//printf("%d\n",token_size );
 	token=(char*)malloc((token_size)*(sizeof(char)));
@@ -163,13 +162,15 @@ int parse_simplecommand(char *str, simple_command *scommand)
 	scommand->_outfiles=(output_file*)malloc(scommand->_no_outfiles*sizeof(output_file));
 	scommand->_infiles=(char**)malloc(scommand->_no_infiles*sizeof(char*));
 	scommand->_tokens=(char**)malloc(scommand->_no_tokens*sizeof(char*));
-	for (i = 0; i < scommand->_no_tokens; ++i) scommand->_tokens[i]=0;
-	for (i = 0; i < scommand->_no_infiles; ++i) scommand->_infiles[i]=0;
+	
+	for (i = 0; i < scommand->_no_tokens; ++i) scommand->_tokens[i]=NULL;
+	for (i = 0; i < scommand->_no_infiles; ++i) scommand->_infiles[i]=NULL;
 	for (i = 0; i < scommand->_no_outfiles; ++i)
 	{
-		scommand->_outfiles[i]._file=0;
+		scommand->_outfiles[i]._file=NULL;
 		scommand->_outfiles[i]._type=0;
 	}
+	
 	str_global=NULL;
 	token=next_token(str,&k);
 	int it_out=0, it_inf=0, it_tokens=0;
@@ -196,9 +197,9 @@ int parse_simplecommand(char *str, simple_command *scommand)
 				}
 				case t_output_write:
 				{
-					
 					scommand->_outfiles[it_out]._file=token;
 					scommand->_outfiles[it_out]._type=t_output_write;
+					++it_out;
 					break;
 				}
 				case t_command:
@@ -256,6 +257,7 @@ int parse_command(char *str,int size,command *ccommand)
 		for (i = 0; token!= NULL; ++i)
 		{   
 			parse_simplecommand(token,&ccommand->_simple_commands[i]);
+			
 			token=strtok_r(NULL,"|",&saveptr);
 		}
 	}

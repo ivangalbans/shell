@@ -20,6 +20,7 @@ int end_register=0;
 
 const char *endl="\n";
 
+char *defaul_path;
 
 void print_history(int fd)
 {
@@ -32,14 +33,22 @@ void print_history(int fd)
 
 int write_prompt()
 {
-		char path[1024],*logname,user[64],*p1="@",*p2=":",*p3="$ ";
+		char path[1024],*logname,user[64],*p1="@",*p2=":",*p3="$ ",*p4="~",*p5=">";
 		getcwd(path,1024);
 		logname = getenv("LOGNAME");
 		gethostname(user,64);
+		write(STDIN_FILENO,p5,strlen(p5));
 		write(STDIN_FILENO,logname,strlen(logname));
 		write(STDIN_FILENO,p1,strlen(p1));
 		write(STDIN_FILENO,user,strlen(user));
 		write(STDIN_FILENO,p2,strlen(p2));
+
+		if(strncmp(defaul_path,path,strlen(defaul_path))==0)
+		{
+			write(STDIN_FILENO,p4,strlen(p4));
+			strcpy(path,path+strlen(defaul_path));
+		}
+
 		write(STDIN_FILENO,path,strlen(path));
 		write(STDIN_FILENO,p3,strlen(p3));
 }
@@ -90,8 +99,19 @@ int get_outfile(simple_command *cmd)
 			}
 		}
 	}
-
 	return outfile;
+}
+
+int get_infile(simple_command *cmd)
+{
+	int infile=STDIN_FILENO;
+	
+	int size_infile=cmd->_no_infiles;
+	
+	if(size_infile>0)
+		infile = open(cmd->_infiles[size_infile-1],O_RDONLY,S_IRWXU);
+
+	return infile;
 }
 
 
@@ -119,7 +139,12 @@ int builtin_command(simple_command *cmd,int fd)
 	char *tmp=cmd->_tokens[0];
 	if(strcmp("cd",tmp)==0)
 	{
-		if (chdir(cmd->_tokens[1]) != 0) 
+		
+		if(cmd->_tokens[1]==NULL || strcmp("~",cmd->_tokens[1])==0)
+		{
+			chdir(defaul_path);
+		}
+		else if (chdir(cmd->_tokens[1]) != 0) 
 		{
   			perror("pm_sh");
 		}
@@ -135,55 +160,62 @@ int builtin_command(simple_command *cmd,int fd)
     return 0;
 }
 
-int get_infile(simple_command *cmd)
-{
-	int infile=STDIN_FILENO;
-	int size_infile=cmd->_no_infiles;
-	if(size_infile>0)
-			 infile=open(cmd->_infiles[size_infile-1],O_RDONLY,S_IRWXU);
-	return infile;
-}
-
 int execute_process(command *cmd)
 {
 	int i;
 	pid_t pid;
-	int fdpipe[2], infile, outfile;
-
+	int fdpipe[2], infile = get_infile(&cmd->_simple_commands[0]), outfile;
+	
 	for(i=0;i<cmd->_no_simple_commands;i++)
 	{
-		outfile=get_outfile(&cmd->_simple_commands[i]);
-		if(i!=cmd->_no_simple_commands-1)
-		{
-			pipe(fdpipe);
-			if(outfile==STDOUT_FILENO)
-				outfile=fdpipe[1];
-			else
-				close(fdpipe[1]);
-		}
-
-		int asd = builtin_command(&cmd->_simple_commands[i],outfile);
-		if(asd==2)
-			return 2;
-		if(!asd)
-		{
-			pid=fork();
-			int status;
-			if(pid==0)
+			if(infile<0)
 			{
-				exec_command(&cmd->_simple_commands[i],infile,outfile);
+				perror("pm_sh");
+				return -1;
 			}
+
+			outfile=get_outfile(&cmd->_simple_commands[i]);
+			
+			if(i!=cmd->_no_simple_commands-1)
+			{
+				pipe(fdpipe);
+				
+				if(outfile==STDOUT_FILENO)
+					outfile=fdpipe[1];
+				else
+					close(fdpipe[1]);
+			}
+
+			int built = builtin_command(&cmd->_simple_commands[i],outfile);
+			if(built==2)
+				return 0;
+
+			if(!built)
+			{
+				pid=fork();
+				int status;
+				if(pid==0)
+				{
+					exec_command(&cmd->_simple_commands[i],infile,outfile);
+				}
+			}
+								
+			if(infile!=get_infile(&cmd->_simple_commands[i]))
+				close(infile);
+			
+			if(outfile!=get_outfile(&cmd->_simple_commands[i]))
+				close(outfile);
+			
+			if(i<cmd->_no_simple_commands-1)
+				infile=get_infile(&cmd->_simple_commands[i+1]);
+			
+
+			if(infile==STDIN_FILENO)
+				infile=fdpipe[0];
+			else 
+				close(fdpipe[0]);
 		}
-		if(infile!=get_infile(&cmd->_simple_commands[i]))
-			close(infile);
-		if(outfile!=get_outfile(&cmd->_simple_commands[i]))
-			close(outfile);
-		infile=get_infile(&cmd->_simple_commands[i]);
-		if(infile==STDIN_FILENO)
-			infile=fdpipe[0];
-		else 
-			close(fdpipe[0]);
-	}
+	
 	
 	if(!cmd->_background)
 	{
@@ -209,15 +241,16 @@ void free_command(command *cmd)
 		{
 			free(cmd->_simple_commands[i]._outfiles[j]._file);
 		}
-		free(cmd->_simple_commands);
 	}
+	free(cmd->_simple_commands);
 }
 
 int main()
 {
 	char *logname = getenv("LOGNAME");
 	char home[] = "/home/";
-	chdir(strcat(home, logname));
+	defaul_path=strcat(home, logname);
+	chdir(defaul_path);
 	
 	while(1)
 	{
@@ -225,10 +258,12 @@ int main()
 		command cmd;
 		read_command(&cmd);
 
-		if(execute_process(&cmd)==2)
-			return 0;
+		int exit = execute_process(&cmd);
 
-		//free_command(&cmd);
+		free_command(&cmd);
+
+		if(exit==2)
+			return 0; 
 	}
 
 	return 0;
